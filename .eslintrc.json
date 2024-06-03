@@ -10,6 +10,13 @@
       "plugin:@typescript-eslint/recommended",
       "prettier"
     ],
+    "settings": {
+      "import/resolver": {
+        "typescript": {
+          "alwaysTryTypes": true
+        }
+      }
+    },
     "rules": {
       // Add any specific ESLint rules here
     }
