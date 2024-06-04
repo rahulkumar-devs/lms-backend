@@ -2,7 +2,7 @@ import { IUserSchema } from './../../types/userTypes';
 import mongoose, { Model, Schema } from "mongoose";
 import bcryptjs from "bcryptjs"
 
-const emailRegex: RegExp = /^[^\$@]+@[^\$@]+\.[^$@]+$/
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 
 const userSchema: Schema<IUserSchema> = new Schema({
@@ -15,6 +15,7 @@ const userSchema: Schema<IUserSchema> = new Schema({
     email: {
         type: String,
         required: [true, "Email is Required"],
+        unique:true,
         validate: {
             validator: function (value: string) {
                 return emailRegex.test(value)
@@ -57,13 +58,17 @@ const userSchema: Schema<IUserSchema> = new Schema({
 
 
 userSchema.pre<IUserSchema>('save', async function (next) {
-    if (!this.isModified("password")) {
-        next();
+    if (!this.isModified('password')) {
+        return next();
     }
-    this.password = await bcryptjs.hash(this.password,10);
-    next()
-
-})
+    try {
+        const salt = await bcryptjs.genSalt(10);
+        this.password = await bcryptjs.hash(this.password, salt);
+        next();
+    } catch (error) {
+        next(error as Error);
+    }
+});
 
 
 userSchema.methods.comparePassword = async function(enteredPassword:string):Promise<boolean>{
