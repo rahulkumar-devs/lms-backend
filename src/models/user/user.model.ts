@@ -1,6 +1,8 @@
 import { IUserSchema } from './../../types/userTypes';
 import mongoose, { Model, Schema } from "mongoose";
-import bcryptjs from "bcryptjs"
+import bcryptjs from "bcryptjs";
+import jwt from "jsonwebtoken"
+import config from '../../configurations/config';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -15,7 +17,7 @@ const userSchema: Schema<IUserSchema> = new Schema({
     email: {
         type: String,
         required: [true, "Email is Required"],
-        unique:true,
+        unique: true,
         validate: {
             validator: function (value: string) {
                 return emailRegex.test(value)
@@ -71,10 +73,21 @@ userSchema.pre<IUserSchema>('save', async function (next) {
 });
 
 
-userSchema.methods.comparePassword = async function(enteredPassword:string):Promise<boolean>{
-    return await bcryptjs.compare(enteredPassword,this.password);
+userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
+    return await bcryptjs.compare(enteredPassword, this.password);
+};
+
+
+userSchema.methods.signAccessToken = async function (): Promise<string> {
+console.log(config.access_token_expiry*60_000);
+    return jwt.sign({ _id: this._id }, config.access_token_key, { expiresIn: "5m"})
+
+
+}
+userSchema.methods.signRefreshToken = async function () {
+
+    return jwt.sign({ _id: this._id }, config.refresh_token_key, { expiresIn:"7d"})
 }
 
-
-const userModel :Model<IUserSchema> =mongoose.model("User",userSchema);
+const userModel: Model<IUserSchema> = mongoose.model("User", userSchema);
 export default userModel;
