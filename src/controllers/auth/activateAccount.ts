@@ -6,11 +6,9 @@ import createHttpError from "http-errors";
 import userModel from "../../models/user/user.model";
 import jwt from "jsonwebtoken";
 import config from "../../configurations/config"
-
 import sendResponse from "../../utils/sendResponse"
-
-
-
+  
+        
 const activateAccount = expressAsyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -33,9 +31,9 @@ const activateAccount = expressAsyncHandler(
             sendResponse(res, 200, true, "successFully user registerd",createUser)
         } catch (error: any) {
            
-            next(error.message)
+            next(error.message) 
         }
     }
-)
+)   
 
-export default activateAccount;
+export default activateAccount;   
