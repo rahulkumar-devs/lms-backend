@@ -14,5 +14,23 @@ export interface IUserSchema extends mongoose.Document {
     isVarified: boolean;
     courses: Array<{ courseId: string }>;
     comparePassword: (password: string) => Promise<boolean>;
+    signAccessToken:()=> Promise<string>
+    signRefreshToken:()=>  Promise<string>
 }
 
+
+export type IRegisterUser = {
+    name: string;
+    email: string;
+    password: string;
+    avatar?: {
+        public_id: string;
+        url: string;
+    },
+
+}
+
+export  type IActivationToken = {
+    token:string;
+activationCode:string;
+} 
