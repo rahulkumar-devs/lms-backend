@@ -5,7 +5,7 @@
   "main": "server.js",
   "scripts": {
     "build": "tsc",
-    "dev": "nodemon --exec ts-node ./server.ts",
+    "dev": "nodemon --exec ts-node  ./server.ts",
     "start": "node dist/server.js"
   },
   "author": "Rahul Kumar",
