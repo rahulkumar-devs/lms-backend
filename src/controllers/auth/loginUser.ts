@@ -1,11 +1,13 @@
 import { Response, Request, NextFunction } from "express";
-import { IRegisterUser, IUserSchema } from "../../types/userTypes";
 import expressAsyncHandler from "express-async-handler";
 import createHttpError from "http-errors";
 import userModel from "../../models/user/user.model";
 import sendToken from "../../utils/jwt"; // Assuming sendToken is your token sending utility
+import redis from "../../configurations/redis-connections";
+import { IUserSchema } from "../../types/userTypes";
+import sendResponse from "../../utils/sendResponse";
 
-const loginUser = expressAsyncHandler(
+export const loginUser = expressAsyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { email, password }: { email: string, password: string } = req.body;
@@ -27,11 +29,35 @@ const loginUser = expressAsyncHandler(
             }
 
             // login user
-            sendToken(user, res);
+           await sendToken(user, res);
         } catch (error: any) {
             next(error);
         }
     }
 );
 
-export default loginUser;
+
+export const logoutUser = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const user = req.user as IUserSchema;
+            if (!user) return next(createHttpError(400, "Not a Valid user or loged in"));
+            try {
+                await redis.del(user?._id as string);
+
+            } catch (error) {
+                next(error)
+
+            }
+            res.clearCookie("accessToken").clearCookie("refreshToken")
+            sendResponse(res, 200, true, "cookie clear");
+        } catch (error) {
+            next(error)
+        }
+
+    })
+
+
+
+
+
