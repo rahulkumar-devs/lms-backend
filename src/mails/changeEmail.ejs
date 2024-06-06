@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Change Email</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .content {
+            text-align: left;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            color: #fff;
+            background-color: #007BFF;
+            text-decoration: none;
+            border-radius: 5px;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Change Your Email</h2>
+        </div>
+        <div class="content">
+            <p>Dear <%= user.name %>,</p>
+            <p>We have received a request to change the email address associated with your account.</p>
+            <p>Your current email: <strong><%= user.email %></strong></p>
+            <p>To confirm the change, please use the following activation code:</p>
+            <p><strong><%= emailChangeCode %></strong></p>
+            <p>If you did not request this change, please ignore this email or contact our support team.</p>
+        </div>
+        <div class="footer">
+            <p>Thank you,</p>
+            <p>The e learning Team</p>
+        </div>
+    </div>
+</body>
+</html>
