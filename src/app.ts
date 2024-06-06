@@ -1,37 +1,30 @@
-
 import express, { NextFunction, Request, Response } from "express";
 import cookieParser from "cookie-parser";
-import morgan from "morgan"
+import morgan from "morgan";
 import cors from "cors";
-// import config from "./configurations/config";
-import config from "./configurations/config"
+import config from "./configurations/config";
 import createHttpError from "http-errors";
-
+import errorHandler from "./utils/errorHandler";
+import userRouter from "../src/routes/user.route";
 
 const app = express();
+const apiVersion = 1;
 
+// Enable CORS middleware
+app.use(cors());
+
+// Logging middleware
+app.use(morgan("dev"));
 
 // Body parsing middleware
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 
-// Enable CORS middleware
-app.use(
-    cors({
-        origin: config.origin_url,
-        methods: ["GET", "POST", "PUT", "DELETE"],
-        allowedHeaders: ["Content-Type", "Authorization"],
-        credentials: true
-    })
-);
-
 // Cookie parsing middleware
 app.use(cookieParser());
 
-
-// Logging middleware
-app.use(morgan("dev"));
-
+// Router middleware
+app.use(`/api/v${apiVersion}`, userRouter);
 
 // 404 Route
 app.all("*", (req: Request, _, next: NextFunction) => {
@@ -39,5 +32,7 @@ app.all("*", (req: Request, _, next: NextFunction) => {
     next(err);
 });
 
+// Error handling middleware
+app.use(errorHandler);
 
 export default app;
