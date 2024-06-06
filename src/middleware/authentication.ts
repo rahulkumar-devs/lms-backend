@@ -6,15 +6,11 @@ import config from "../configurations/config";
 import userModel from "../models/user/user.model";
 
 export const isAuthenticated = expressAsyncHandler(
-    async (req: Request, _, next: NextFunction) => {
+    async (req: Request, res: Response, next: NextFunction) => {
         try {
             // Extract token from cookies or headers
             const accessToken = req.cookies?.accessToken;
             const tokenFromHeader = req.header("authorization")?.replace("Bearer", "").trim();
-
-            console.log("Token from accessToken cookie:", accessToken);
-
-
 
             const token = accessToken || tokenFromHeader;
 
@@ -28,12 +24,16 @@ export const isAuthenticated = expressAsyncHandler(
             try {
                 decode_token = jwt.verify(token, config.access_token_key) as JwtPayload;
             } catch (error: any) {
-                return next(error);
-            }
-
-            if (!decode_token) {
-                console.error("Failed to decode token");
-                return next(createHttpError(401, "Unauthorized"));
+                if (error.name === 'TokenExpiredError') {
+                    
+                    return next(createHttpError(401, 'Token is expired'));
+                } else if (error.name === 'JsonWebTokenError') {
+                   
+                    return next(createHttpError(401, 'Invalid token'));
+                } else {
+                   
+                    return next(createHttpError(400, "Token verification failed"));
+                }
             }
 
             // Extract user ID from token
@@ -44,7 +44,7 @@ export const isAuthenticated = expressAsyncHandler(
             }
 
             // Find user in database
-            const user = await userModel.findById(_id);
+            const user = await userModel.findById(_id).select("-password");
             if (!user) {
                 console.error("User not found in database");
                 return next(createHttpError(401, "Unauthorized user"));
@@ -54,9 +54,8 @@ export const isAuthenticated = expressAsyncHandler(
             req.user = user;
             next();
         } catch (error) {
-            console.error("Authentication error:", error);
-            next(error);
+           
+            next(createHttpError(500, "Internal Server Error"));
         }
     }
 );
-
