@@ -28,7 +28,13 @@ const _config = {
     smtp_service :process.env.SMTP_SERVICE,
 
     // Admin Emain
-    //    admin_email:process.env.ADMIN_EMAIL
+       admin_email:process.env.ADMIN_EMAIL,
+
+
+    // jwt-email-verification key
+    jwt_email_verification_key : process.env.JWT_EMAIL_VERIFICATION_KEY || ""
+
+
 };
 
 // freez _config so that noBody can overWrite
