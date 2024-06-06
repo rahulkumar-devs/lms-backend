@@ -9,7 +9,7 @@ const authorizedRole = (...roles: string[]) => {
         }
 
         const userRoles = req.user.roles;
-        console.log(userRoles)
+        // console.log(userRoles)
 
         if (!Array.isArray(userRoles) || !userRoles.some(role => roles.includes(role))) {
             return next(createHttpError(403, `Roles: [${userRoles.join(", ")}] are not allowed to access this resource`));
