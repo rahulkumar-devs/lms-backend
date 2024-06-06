@@ -1,12 +1,20 @@
 import { NextFunction, Request, Response } from "express";
-import createHttpError from "http-errors";
+import createHttpError, { HttpError } from "http-errors";
 
 const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
     try {
-        err.status = err.status || 500; // Change statusCode to status
-        err.message = err.message || "Internal Server Error";
+        const status = err.status || 500;
+        const message = err.message || "Internal Server Error";
 
-        console.log("Error:", err); // Log the error object to inspect its structure
+        // Log the error details for debugging
+        // console.error("Error:", {
+        //     message: err.message,
+        //     stack: err.stack,
+        //     name: err.name,
+        //     status: err.status,
+        //     code: err.code,
+        //     keyValue: err.keyValue
+        // });
 
         // Handle Mongoose cast errors (invalid ObjectId)
         if (err.name === "CastError") {
@@ -24,22 +32,24 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
         // Handle JWT errors
         if (err.name === "JsonWebTokenError") {
             const message = `Invalid JSON Web Token`;
-            err = createHttpError(400, message);
+            err = createHttpError(400, message); // Use 401 for unauthorized errors
         }
 
         // Handle JWT expired errors
         if (err.name === "TokenExpiredError") {
             const message = `JSON Web Token has expired`;
-            err = createHttpError(400, message);
+            err = createHttpError(400, message); // Use 401 for unauthorized errors
         }
 
         // Send the error response
-        res.status(err.status).json({ // Change statusCode to status
+        res.status(err.status || 500).json({
             success: false,
-            message: err.message,
+            message: err.message || "Internal Server Error",
+            // Include stack trace in development mode
+            ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
         });
     } catch (error) {
-        console.error("Error in error handler:", error);
+        // console.error("Error in error handler:", error);
         res.status(500).json({
             success: false,
             message: "Internal Server Error",
