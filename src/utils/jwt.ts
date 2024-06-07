@@ -24,7 +24,6 @@ export const accessTokenOptions: ITokenOptions = {
 };
 
 
-
 export const refreshTokenOptions: ITokenOptions = {
     expires: new Date(Date.now() + config.refresh_token_expiry * 24 * 60 * 60 * 1000), // Calculate expiry time
     maxAge: config.refresh_token_expiry * 24 * 60 * 60 * 1000,
