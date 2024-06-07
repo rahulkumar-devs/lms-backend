@@ -16,7 +16,7 @@ export interface ITokenOptions {
 
 // Cookie options
 export const accessTokenOptions: ITokenOptions = {
-    expires: new Date(Date.now() + config.access_token_expiry ** 60 * 60 * 1000),
+    expires: new Date(Date.now() + config.access_token_expiry * 60 * 60 * 1000),
     maxAge: config.access_token_expiry * 60 * 60 * 1000,
     httpOnly: true,
     sameSite: 'none',
