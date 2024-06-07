@@ -6,6 +6,7 @@ import sendToken from "../../utils/jwt"; // Assuming sendToken is your token sen
 import redis from "../../configurations/redis-connections";
 import { IUserSchema } from "../../types/userTypes";
 import sendResponse from "../../utils/sendResponse";
+import config from "../../configurations/config";
 
 export const loginUser = expressAsyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -16,25 +17,33 @@ export const loginUser = expressAsyncHandler(
                 return next(createHttpError(400, "Invalid credentials"));
             }
 
-            const user = await userModel.findOne({ email }).select('+password');
-
+            const user = await userModel.findOne({ email }).select("+password");
             if (!user) {
                 return next(createHttpError(400, "User does not exist"));
             }
 
+
+            if (!user.password) {
+                return next(createHttpError(500, "User password is missing in the database"));
+            }
+
             const isPasswordMatched = await user.comparePassword(password);
+
 
             if (!isPasswordMatched) {
                 return next(createHttpError(400, "Password does not match"));
             }
 
+
+
             // login user
-           await sendToken(user, res);
+            await sendToken(user, res);
         } catch (error: any) {
             next(error);
         }
     }
 );
+
 
 
 export const logoutUser = expressAsyncHandler(
