@@ -31,9 +31,7 @@ const registrationsUser = expressAsyncHandler(async (req: Request, res: Response
         // send to mail
 
         const registerData = {
-            user: {
-                name: user.name, email: user.email,password:user.password
-            },
+            user,
             activationCode
         }
 
@@ -46,8 +44,8 @@ const registrationsUser = expressAsyncHandler(async (req: Request, res: Response
             try {
                 await sendMail(
                     {
-                         email,
-                        template:html,
+                        email,
+                        template: html,
                         subject: "Email varification ",
                     }
                 )
@@ -57,10 +55,7 @@ const registrationsUser = expressAsyncHandler(async (req: Request, res: Response
 
         });
 
-        sendResponse(res, 200, true, ` Code has been sent please Verify your account ${email} `, token)
-
-
-
+      return  sendResponse(res, 200, true, ` Code has been sent please Verify your account ${email}- ${activationCode} `, token)
 
     } catch (error: any) {
         next(createHttpError(500, error.message))
