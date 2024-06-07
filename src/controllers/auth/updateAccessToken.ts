@@ -20,12 +20,13 @@ export const updateAccessToken = expressAsyncHandler(async (req: Request, res: R
 
         if (!sessions) return next(createHttpError("Could not refresh token"))
 
+
         const user = JSON.parse(sessions);
 
         const newAccessToken = jwt.sign({ _id: user?._id }, config.access_token_key, { expiresIn: "5m" });
         const newRefreshToken = jwt.sign({ _id: user?._id }, config.access_token_key, { expiresIn: "7d" });
 
-
+        req.user = user;
         res.cookie("accessToken", newAccessToken, accessTokenOptions).cookie("refreshToken", newRefreshToken, refreshTokenOptions).status(200).json({
             success: true,
             message: "Token attached",
