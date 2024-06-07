@@ -32,14 +32,19 @@ const errorHandler = (err: any, req: Request, res: Response, next: NextFunction)
         // Handle JWT errors
         if (err.name === "JsonWebTokenError") {
             const message = `Invalid JSON Web Token`;
-            err = createHttpError(400, message); // Use 401 for unauthorized errors
+            err = createHttpError(400, message); 
         }
 
         // Handle JWT expired errors
         if (err.name === "TokenExpiredError") {
             const message = `JSON Web Token has expired`;
-            err = createHttpError(400, message); // Use 401 for unauthorized errors
+            err = createHttpError(400, message); 
         }
+
+        if (err.code === 'LIMIT_FILE_SIZE') {
+            const message = "Error: File size exceeds the limit of 10MB.";
+            err = createHttpError(400, message); 
+          }
 
         // Send the error response
         res.status(err.status || 500).json({
