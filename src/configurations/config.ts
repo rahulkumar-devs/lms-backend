@@ -32,7 +32,8 @@ const _config = {
 
 
     // jwt-email-verification key
-    jwt_email_verification_key : process.env.JWT_EMAIL_VERIFICATION_KEY || ""
+    jwt_email_verification_key : process.env.JWT_EMAIL_VERIFICATION_KEY || "",
+    jwt_password_reset_key:process.env.JWT_PASSWORD_RESET_KEY||"",
 
 
 };
