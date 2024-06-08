@@ -3,6 +3,11 @@ import { Request, Response, NextFunction } from 'express';
 import createHttpError from 'http-errors';
 import { isValidObjectId } from 'mongoose';
 import courseModel from '../models/course/course.model';
+import path from 'path';
+import ejs from "ejs";
+import sendMail from '../utils/sendMail';
+import sendResponse from '../utils/sendResponse';
+import { IUserSchema } from '../types/userTypes';
 
 
 export const addQuestions = expressAsyncHandler(
@@ -31,12 +36,13 @@ export const addQuestions = expressAsyncHandler(
 
 
 
-            courseContent.questions.push({ question, questionReplies: [], user: req?.user?._id } as any)
+            courseContent.questions.push({ question, questionReplies: [], user: req?.user } as any)
 
 
             await course.save();
 
-            res.status(201).json({ message: 'Question added successfully' });
+            return sendResponse(res, 200, true, "Add Question", course)
+
         } catch (error: any) {
             return next(createHttpError(500, error.message));
         }
@@ -67,8 +73,8 @@ export const addAnswer = expressAsyncHandler(
 
             const course = await courseModel.findById(courseId);
 
-            const courseContent = course?.courseData.find((item) => String(item._id) === contentId); 
-            console.log(courseContent)
+            const courseContent = course?.courseData.find((item) => String(item._id) === contentId);
+            // console.log(courseContent)
             if (!courseContent) {
                 return next(createHttpError(400, 'Invalid content id'));
             }
@@ -79,16 +85,109 @@ export const addAnswer = expressAsyncHandler(
                 return next(createHttpError(400, 'Invalid question id'));
             }
 
-            question.questionReplies.push({ answer: answer } as any)
+            question.questionReplies.push({ answer: answer, user: req?.user } as any)
 
 
             await course?.save()
 
-            res.status(201).json({ message: 'Question added successfully' });
+
+            // don't send notification mail to user if user reply to self
+
+            if (String(req.user?._id) === String(question.user?._id)) {
+
+                // attach notification 
+                console.log("notification")
+            } else {
+                // send mail here 
+
+
+                const data = {
+                    name: question.user?.name || "",
+                    title: courseContent.title,
+                    dateAndTime: new Date(Date.now()),
+                    replied: answer,
+
+
+                }
+
+                const htmlPath = path.resolve(path.join(__dirname, "../mails/notificationReply.ejs"));
+                const notificationFile = await ejs.renderFile(htmlPath, data);
+
+                try {
+
+                    console.log(question.user?.email)
+                    await sendMail({ email: question.user?.email, subject: " E-learning Question's reply ", template: notificationFile })
+
+                } catch (error: any) {
+                    next(createHttpError(500, error.message))
+                }
+            }
+
+            return sendResponse(res, 200, true, "answer of asked question", course)
 
         } catch (error: any) {
             return next(createHttpError(500, error.message));
 
         }
 
+    });
+
+// <======Review======>
+
+interface IReviewData {
+    userId: string;
+    review: string;
+    rating: string;
+
+}
+
+export const addReview = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        try {
+
+            const courseLists = req.user as IUserSchema;
+            const { courseId } = req.params;
+
+            // check is course exist , if exists then it can give reviews
+            const isCourseExists = courseLists.courses.some((item) => item.courseId.toString() === courseId.toString());
+            if (!isCourseExists)
+                return next(createHttpError(404, "you are not eligible to review"))
+
+            const course = await courseModel.findById(courseId);
+
+            // destructure review obj
+            const { review, rating } = req.body as IReviewData
+
+
+            const newReview: any = {
+                user: req.user,
+                comment: review,
+                rating,
+            }
+            course?.reviews.push(newReview)
+
+            let avg = 0;
+
+            course?.reviews.forEach((rev) => {
+                avg += rev.rating;
+            })
+
+            if (course) {
+                course.ratings = avg / course.reviews.length;
+            }
+
+            await course?.save()
+
+            const notification = {
+                title: "New review recived",
+                message: ` ${req?.user?.name} has given a review ${course?.name}`
+            }
+
+            return sendResponse(res, 200, true, "add review", course)
+
+        } catch (error: any) {
+            return next(createHttpError(500, error.message));
+
+        }
     })
