@@ -6,6 +6,7 @@ import config from "./configurations/config";
 import createHttpError from "http-errors";
 import errorHandler from "./utils/errorHandler";
 import userRouter from "../src/routes/user.route";
+import courseRoutes from "./routes/course.route";
 
 const app = express();
 const apiVersion = 1;
@@ -25,6 +26,7 @@ app.use(cookieParser());
 
 // Router middleware
 app.use(`/api/v${apiVersion}`, userRouter);
+app.use(`/api/v${apiVersion}`, courseRoutes);
 
 // 404 Route
 app.all("*", (req: Request, _, next: NextFunction) => {
