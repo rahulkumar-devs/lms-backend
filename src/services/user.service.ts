@@ -14,7 +14,8 @@ import { IUserSchema } from "../types/userTypes";
 import { verifyToken } from "../utils/veifyToken";
 import userModel from './../models/user/user.model';
 import redis from "../configurations/redis-connections";
-
+import uploadImageToCloudinary, { IFileDetails, checkFileExistsInCloudinary, deleteCloudinaryFile } from "../utils/cloudinaryImageUpload";
+import fs from "fs";
 
 // get one user / userById
 // only authorized person can see 
@@ -26,13 +27,13 @@ export const getUserById = expressAsyncHandler(
             const userId = req.user?._id;
 
 
-            const redisInfo = await redis.get(userId);
+            const redisInfo = JSON.parse(await redis.get(userId) || "");
             if (redisInfo) {
 
-                return sendResponse(res, 200, true, "User info", { user: redisInfo })
+                return sendResponse(res, 200, true, "User info", redisInfo)
             }
 
-            if (!isValidObjectId(userId)) return next(createHttpError(400, "Not a valid Id"));
+            if (!userId || !isValidObjectId(userId)) return next(createHttpError(400, "Not a valid Id"));
             const user = await userModel.findById({ _id: userId });
             if (!user) return next(createHttpError(404, "user not found"));
             sendResponse(res, 200, true, "User info", user)
@@ -50,13 +51,32 @@ export const updateUserInfo = expressAsyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { name } = req.body;
+            const avatarPath = req.file?.path;
             const userId = req.user?._id;
 
             if (!userId || !isValidObjectId(userId)) {
                 return next(createHttpError(400, "Invalid user ID"));
             }
 
-            const user = await userModel.findByIdAndUpdate(userId, { name }, { new: true });
+            let avatarPic = {};
+
+            if (avatarPath) {
+                if (req.user.avatar.public_id) {
+                    const isExistFile = await checkFileExistsInCloudinary(req.user.avatar.public_id)
+                    console.log("isExistFile", isExistFile)
+                    if (isExistFile) {
+                        const isDelete = await deleteCloudinaryFile(req.user.avatar.public_id)
+                        console.log("isDelete", isDelete)
+                        avatarPic = await uploadImageToCloudinary({ filePath: avatarPath, folder: "avatar" })
+                        console.log(avatarPic)
+                    }
+                }
+                else {
+                    avatarPic = await uploadImageToCloudinary({ filePath: avatarPath, folder: "avatar" })
+                }
+            }
+
+            const user = await userModel.findByIdAndUpdate(userId, { name, avatar: avatarPic }, { new: true });
             // also change in redis
             await redis.set(userId as string, JSON.stringify(user))
 
@@ -66,7 +86,11 @@ export const updateUserInfo = expressAsyncHandler(
 
             return sendResponse(res, 200, true, "Update successful", user);
         } catch (error) {
-            console.error(error);
+
+            if (fs.existsSync(req.file?.path as string)) {
+                fs.unlinkSync(req.file?.path as string)
+            }
+
             next(error);
         }
     }
@@ -95,14 +119,27 @@ export const changeEmail = expressAsyncHandler(
                 return next(createHttpError(400, "Invalid email address"));
             }
 
-            const user = await userModel.findById(userId);
+
+
+            // get data from redis
+            const user = JSON.parse(await redis.get(userId) || "")
+
+
+            if (newEmail === user?.email) {
+                return next(createHttpError(400, " Email already exist"));
+
+            }
+            // can't change original admin email
+            if (newEmail === config.admin_email) {
+                return next(createHttpError(400, " You have not permission to update this email"));
+            }
 
             if (!user) {
                 return next(createHttpError(404, "User not found"));
             }
 
             const newCode = generateRandomNumber(6);
-            console.log(newCode)
+            // console.log(newCode)
 
             const newData: IChangeEmail = {
                 id: userId.toString(),
@@ -194,8 +231,12 @@ export const emailVerification = expressAsyncHandler(
             const updatedUser = await userModel.findByIdAndUpdate(
                 userId,
                 { email: user.email },
-                { new: true, select: "-password -courses" }
+                { new: true }
             ) as IUserSchema;
+
+            // update redis
+
+            await redis.set(userId as string, JSON.stringify(updatedUser))
 
             if (!updatedUser) {
                 return next(createHttpError(400, "Unable to update email"));
@@ -208,4 +249,26 @@ export const emailVerification = expressAsyncHandler(
     }
 );
 
+
+// Only  Admin  can delete this
+export const deleteUser = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        try {
+
+            const { userId } = req.body;
+
+            if (!userId) return next(createHttpError(400, "Email code and email token are required"));
+
+            const isDelete = userModel.findByIdAndDelete({ _id: userId });
+            // also del from redis
+            await redis.del(userId as string)
+            if (!isDelete) return next(createHttpError(400, "User not deleted"));
+
+            return sendResponse(res, 200, true, "User deleted")
+        } catch (error) {
+            next(error);
+
+        }
+    })
 
