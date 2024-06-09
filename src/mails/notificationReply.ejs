@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notification</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .notification-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #ffffff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .notification-header {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #333;
+            font-weight: bold;
+            text-align: center;
+        }
+        .notification-body {
+            font-size: 1em;
+            color: #555;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .notification-body p {
+            margin: 0 0 10px;
+        }
+        .notification-footer {
+            margin-top: 20px;
+            font-size: 0.9em;
+            color: #888;
+            text-align: center;
+        }
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-size: 1em;
+            color: #ffffff;
+            background-color: #007BFF;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+        }
+        .button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-container">
+        <div class="notification-header">Hello, <%= name %>!</div>
+        <div class="notification-body">
+            <p>You have a new update for the course titled "<%= title %>".</p>
+            <p>Replied answer: 🐯 <%= replied %></p>
+        </div>
+        <a href="" class="button">View Reply</a>
+        <div class="notification-footer">
+            <p>Notification sent on <%= dateAndTime %></p>
+        </div>
+    </div>
+</body>
+</html>
