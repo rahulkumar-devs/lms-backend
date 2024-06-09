@@ -150,11 +150,15 @@ export const addReview = expressAsyncHandler(
             const { courseId } = req.params;
 
             // check is course exist , if exists then it can give reviews
-            const isCourseExists = courseLists.courses.some((item) => item.courseId.toString() === courseId.toString());
+            const isCourseExists = courseLists.courses.some((item) => item.courseId === courseId);
             if (!isCourseExists)
                 return next(createHttpError(404, "you are not eligible to review"))
 
             const course = await courseModel.findById(courseId);
+
+            if (!course)
+                return next(createHttpError(404, "Course not found"))
+
 
             // destructure review obj
             const { review, rating } = req.body as IReviewData
@@ -190,4 +194,52 @@ export const addReview = expressAsyncHandler(
             return next(createHttpError(500, error.message));
 
         }
+    })
+
+
+// <=====(Replies on reviews)====>
+// <====member and admin can reply =====>
+
+interface IAddReviewReply {
+    comment: string;
+    courseId: string;
+    reviewId: string;
+}
+
+export const addReplyOnReview = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+
+        try {
+            const { comment, courseId, reviewId } = req.body as IAddReviewReply
+            const course = await courseModel.findById(courseId);
+
+            if (!course)
+                return next(createHttpError(404, "Course not found"))
+
+            const reviews = course.reviews.find((item) => String(item._id) === reviewId.toString());
+
+            if (!reviews)
+                return next(createHttpError(404, "review Id not found"))
+
+            const replyData: any = {
+                user: req.user,
+                comment
+            }
+
+            if(!reviews.commentReplies)
+                reviews.commentReplies=[];
+
+            reviews.commentReplies.push(replyData)
+
+
+            await course.save()
+
+
+            return sendResponse(res, 200, true, "add reply on review", course)
+
+        } catch (error: any) {
+            return next(createHttpError(500, error.message));
+
+        }
+
     })
