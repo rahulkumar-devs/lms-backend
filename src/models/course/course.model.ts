@@ -1,13 +1,15 @@
 import mongoose, { Document, Model, Schema } from "mongoose";
+import { IUserSchema } from "../../types/userTypes";
 
 // Interface Definitions
-interface IComment extends Document {
-    user: mongoose.Types.ObjectId;
-    comment: string;
+export interface IComment extends Document {
+    user: IUserSchema;
+    question: string;
+    questionReplies: [{answer:string}];
 }
 
 interface IReview extends Document {
-    user: mongoose.Types.ObjectId;
+    user: IUserSchema;
     rating: number;
     comment: string;
     commentReplies: IComment[];
@@ -18,7 +20,7 @@ interface ILink extends Document {
     url: string;
 }
 
-interface ICourseData extends Document {
+export interface ICourseData extends Document {
     title: string;
     descriptions: string;
     videoUrl: string;
@@ -31,12 +33,12 @@ interface ICourseData extends Document {
     questions: IComment[];
 }
 
-interface ICourse extends Document {
+export interface ICourse extends Document {
     name: string;
     descriptions: string;
     price: number;
     estimatePrice?: number;
-    thumbnail: { public_id: string; url: string };
+    thumbnail?: { public_id: string; url: string };
     tags: string;
     level: string;
     demoUrl: string;
@@ -47,26 +49,17 @@ interface ICourse extends Document {
     ratings?: number;
     purchased?: number;
 }
-
 // Schema Definitions
 const commentSchema = new Schema<IComment>({
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: [true, "User is required"],
-    },
-    comment: {
+    user:Object,
+    question: {
         type: String,
-        required: [true, "Comment is required"],
     },
+    questionReplies: [{answer:String}],
 });
 
 const reviewSchema = new Schema<IReview>({
-    user: {
-        type: Schema.Types.ObjectId,
-        ref: "User",
-        required: [true, "User is required"],
-    },
+    user: Object,
     rating: {
         type: Number,
         default: 0,
@@ -76,7 +69,7 @@ const reviewSchema = new Schema<IReview>({
         type: String,
         required: [true, "Comment is required"],
     },
-    commentReplies: [commentSchema],
+    commentReplies: [Object],
 });
 
 const linkSchema = new Schema<ILink>({
@@ -150,11 +143,9 @@ const courseSchema = new Schema<ICourse>({
     thumbnail: {
         public_id: {
             type: String,
-            required: [true, "Thumbnail public ID is required"],
         },
         url: {
             type: String,
-            required: [true, "Thumbnail URL is required"],
         },
     },
     tags: {
