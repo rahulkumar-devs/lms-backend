@@ -26,6 +26,8 @@ const activateAccount = expressAsyncHandler(
             let roles: ("user" | "admin" | "member")[] = [];
             if (email === config.admin_email) {
                 roles.push("admin");
+            }else{
+                roles.push("user");
             }
 
             const createUser = await userModel.create({ name, email, password, roles: roles })
