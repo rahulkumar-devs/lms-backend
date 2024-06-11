@@ -29,7 +29,7 @@ export const getSingleCourse = expressAsyncHandler(
             } else {
                 const course = await courseModel.findById(courseId).select("-courseData.videoUrl -courseData.suggestion -courseData.questions -courseData.links");
                 console.log("data from mongoose")
-                redis.set(courseId, JSON.stringify(course))
+                redis.set(courseId, JSON.stringify(course),"EX",604800)
                 return sendResponse(res, 200, true, "courses ", course)
             }
 
@@ -45,7 +45,6 @@ export const getSingleCourse = expressAsyncHandler(
 // <===get all courses===>
 // <===Without purchase===>
 
-
 export const getAllCourses = expressAsyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
         try {
@@ -53,8 +52,8 @@ export const getAllCourses = expressAsyncHandler(
             const limit = parseInt(req.query.limit as string) || 10;
             const skip = (page - 1) * limit;
 
-            const cacheKey = `allCourses?page=${page}&limit=${limit}`;
-            const isCacheExists = await redis.get(cacheKey);
+
+            const isCacheExists = await redis.get("AllCourses");
 
             if (isCacheExists) {
                 const courses = JSON.parse(isCacheExists);
@@ -78,8 +77,7 @@ export const getAllCourses = expressAsyncHandler(
                 };
 
                 // Set the cache to expire after a certain period, e.g., 1 hour (3600 seconds)
-                await redis.set(cacheKey, JSON.stringify(courses), 'EX', 3600);
-
+                await redis.set("AllCourses", JSON.stringify(courses), 'EX', 3600);
                 return sendResponse(res, 200, true, "Courses fetched successfully", courses);
             }
         } catch (error: any) {
@@ -97,11 +95,11 @@ export const getCourseForElibigleUser = expressAsyncHandler(
             const user = req.user as IUserSchema;
             const courseLists = user.courses;
 
-                const getUserCourses =  courseLists.find((item) => item.courseId.toString() === courseId.toString());
-                if (!getUserCourses) {
-                    return next(createHttpError(404, " you are not eligible for this course"));
-                }
-            
+            const getUserCourses = courseLists.find((item) => item.courseId.toString() === courseId.toString());
+            if (!getUserCourses) {
+                return next(createHttpError(404, " you are not eligible for this course"));
+            }
+
 
             const course = await courseModel.findById(courseId) || null;
 
@@ -109,8 +107,33 @@ export const getCourseForElibigleUser = expressAsyncHandler(
 
             return sendResponse(res, 200, true, "Courses fetched successfully", coursesData);
 
-        } catch (error) {
+        } catch (error: any) {
+            return next(createHttpError(500, error.message))
+        }
 
+    })
+
+// <=====Get All Courses ====>
+// <===== for Admin ====>
+
+export const getAllCoursesForAdmin = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const skip = (page - 1) * limit;
+
+            const courses = await courseModel.find().skip(skip).limit(limit).sort({ createdAt: -1 });
+
+            if (!courses)
+                return next(createHttpError(404, "courses not found"));
+
+            return sendResponse(res, 200, true, "Courses fetched successfully", courses);
+
+
+        } catch (error: any) {
+            return next(createHttpError(500, error.message))
         }
 
     })
