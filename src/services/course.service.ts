@@ -8,6 +8,7 @@ import ejs from "ejs";
 import sendMail from '../utils/sendMail';
 import sendResponse from '../utils/sendResponse';
 import { IUserSchema } from '../types/userTypes';
+import notificationModel from '../models/notification/notification.model';
 
 
 export const addQuestions = expressAsyncHandler(
@@ -38,6 +39,12 @@ export const addQuestions = expressAsyncHandler(
 
             courseContent.questions.push({ question, questionReplies: [], user: req?.user } as any)
 
+
+            await notificationModel.create({
+                title: "New Question Reciveed",
+                message: `you have new Question in ${courseContent.title}`,
+                userId: req?.user?._id,
+            })
 
             await course.save();
 
@@ -95,8 +102,14 @@ export const addAnswer = expressAsyncHandler(
 
             if (String(req.user?._id) === String(question.user?._id)) {
 
-                // attach notification 
-                console.log("notification")
+                // send Notification <=========Notification ==========>
+
+                await notificationModel.create({
+                    title: "New Question Reply Reciveed",
+                    message: `you have new Question in Reply ${courseContent.title}`,
+                    userId: req?.user?._id,
+                })
+
             } else {
                 // send mail here 
 
@@ -226,8 +239,8 @@ export const addReplyOnReview = expressAsyncHandler(
                 comment
             }
 
-            if(!reviews.commentReplies)
-                reviews.commentReplies=[];
+            if (!reviews.commentReplies)
+                reviews.commentReplies = [];
 
             reviews.commentReplies.push(replyData)
 
@@ -243,3 +256,4 @@ export const addReplyOnReview = expressAsyncHandler(
         }
 
     })
+
