@@ -17,6 +17,7 @@ import redis from "../configurations/redis-connections";
 import uploadImageToCloudinary, { IFileDetails, checkFileExistsInCloudinary, deleteCloudinaryFile } from "../utils/cloudinaryImageUpload";
 import fs from "fs";
 
+
 // get one user / userById
 // only authorized person can see 
 export const getUserById = expressAsyncHandler(
@@ -256,19 +257,48 @@ export const deleteUser = expressAsyncHandler(
 
         try {
 
-            const { userId } = req.body;
+            const { userId } = req.params;
 
-            if (!userId) return next(createHttpError(400, "Email code and email token are required"));
+            if (req.user?.email === config.admin_email)
+                return next(createHttpError(400, "This Email could'nt delete"));
 
-            const isDelete = userModel.findByIdAndDelete({ _id: userId });
+            if (!userId) return next(createHttpError(400, "Invalid user Id"));
+
+            const isDelete = await userModel.findByIdAndDelete({ _id: userId });
+
+            if (!isDelete) return next(createHttpError(400, "User not deleted"));
             // also del from redis
             await redis.del(userId as string)
-            if (!isDelete) return next(createHttpError(400, "User not deleted"));
 
             return sendResponse(res, 200, true, "User deleted")
-        } catch (error) {
-            next(error);
+        } catch (error: any) {
+            next(createHttpError(500, error.message));
 
         }
-    })
+})
+
+
+// for admin only
+
+export const getAllUsers = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
+
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+            const skip = (page - 1) * limit;
+
+
+            const users = await userModel.find().skip(skip).limit(limit).sort({ createdAt: -1 });
+
+            return sendResponse(res, 200, true, "get all users", users)
+
+
+        } catch (error: any) {
+            return next(createHttpError(500, error.message));
+
+        }
+
+})
+
 
