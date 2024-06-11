@@ -172,6 +172,8 @@ const courseSchema = new Schema<ICourse>({
         type: Number,
         default: 0,
     },
+},{
+    timestamps:true
 });
 
 // Model Definition
