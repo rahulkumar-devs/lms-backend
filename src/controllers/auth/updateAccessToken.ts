@@ -32,17 +32,19 @@ export const updateAccessToken = expressAsyncHandler(async (req: Request, res: R
         const newAccessToken = jwt.sign({ _id: user?._id }, config.access_token_key, { expiresIn: `${config.access_token_expiry}m` });
         const newRefreshToken = jwt.sign({ _id: user?._id }, config.refresh_token_key, { expiresIn: `${config.refresh_token_expiry}d` });
 
-        // Set cookies with new tokens
-        res.cookie("accessToken", newAccessToken, accessTokenOptions)
-           .cookie("refreshToken", newRefreshToken, refreshTokenOptions)
-           .status(200).json({
-               success: true,
-               message: "Tokens updated successfully",
-               accessToken: newAccessToken
-           });
-
         // Update user session in Redis with new expiration time
         await redis.set(sessionId, JSON.stringify(user), "EX", config.refresh_token_expiry * 24 * 60 * 60);
+
+        // Set cookies with new tokens
+        res.cookie("accessToken", newAccessToken, accessTokenOptions)
+            .cookie("refreshToken", newRefreshToken, refreshTokenOptions)
+            .status(200).json({
+                success: true,
+                message: "Tokens updated successfully",
+                accessToken: newAccessToken
+            });
+
+
 
     } catch (error) {
         next(error);
