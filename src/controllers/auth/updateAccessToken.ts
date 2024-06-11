@@ -4,37 +4,47 @@ import jwt, { JwtPayload } from 'jsonwebtoken';
 import config from "../../configurations/config";
 import redis from "../../configurations/redis-connections";
 import createHttpError from "http-errors";
-import sendToken, { accessTokenOptions, refreshTokenOptions } from "../../utils/jwt";
+import { accessTokenOptions, refreshTokenOptions } from "../../utils/jwt";
 
 export const updateAccessToken = expressAsyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-
     try {
         const refreshToken = req.cookies.refreshToken;
-        let decode_refreshToken;
+
+        // Verify refresh token
+        let decodedRefreshToken: JwtPayload;
         try {
-            decode_refreshToken = jwt.verify(refreshToken, config.refresh_token_key) as JwtPayload
+            decodedRefreshToken = jwt.verify(refreshToken, config.refresh_token_key) as JwtPayload;
         } catch (error) {
-            next(error)
+            return next(createHttpError(401, "Invalid refresh token"));
         }
-        const sessions = await redis.get(decode_refreshToken?._id as string);
 
-        if (!sessions) return next(createHttpError("Could not refresh token"))
+        // Check if session exists in Redis
+        const sessionId = decodedRefreshToken?._id as string;
+        const sessionData = await redis.get(sessionId);
+        if (!sessionData) {
+            return next(createHttpError(400, "User session not found"));
+        }
 
+        // Parse user data from session
+        const user = JSON.parse(sessionData);
 
-        const user = JSON.parse(sessions);
+        // Generate new tokens
+        const newAccessToken = jwt.sign({ _id: user?._id }, config.access_token_key, { expiresIn: `${config.access_token_expiry}m` });
+        const newRefreshToken = jwt.sign({ _id: user?._id }, config.refresh_token_key, { expiresIn: `${config.refresh_token_expiry}d` });
 
-        const newAccessToken = jwt.sign({ _id: user?._id }, config.access_token_key, { expiresIn: "5m" });
-        const newRefreshToken = jwt.sign({ _id: user?._id }, config.access_token_key, { expiresIn: "7d" });
+        // Set cookies with new tokens
+        res.cookie("accessToken", newAccessToken, accessTokenOptions)
+           .cookie("refreshToken", newRefreshToken, refreshTokenOptions)
+           .status(200).json({
+               success: true,
+               message: "Tokens updated successfully",
+               accessToken: newAccessToken
+           });
 
-        req.user = user;
-        res.cookie("accessToken", newAccessToken, accessTokenOptions).cookie("refreshToken", newRefreshToken, refreshTokenOptions).status(200).json({
-            success: true,
-            message: "Token attached",
-            user,
-            accessToken: newAccessToken
-        });
+        // Update user session in Redis with new expiration time
+        await redis.set(sessionId, JSON.stringify(user), "EX", config.refresh_token_expiry * 24 * 60 * 60);
+
     } catch (error) {
-        next(error)
+        next(error);
     }
-})
-
+});
