@@ -6,40 +6,103 @@ import userModel from "../../models/user/user.model";
 import sendResponse from "../../utils/sendResponse";
 import sendToken from "../../utils/jwt";
 
+
+interface IRole {
+    role: "admin" | "member" | "user"
+}
+
+
 const rolePermission = expressAsyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     try {
-        // Ensure req.user is defined and has the necessary properties
-        if (!req.user) {
-            return next(createHttpError(401, "Unauthorized"));
+        const { userId } = req.params;
+        const { role } = req.body as IRole;
+
+        if (!role) {
+            return next(createHttpError(400, "Select a valid role"));
         }
 
-        const { email, roles } = req.user;
+        const isAdminEmail = req.user.email === config.admin_email;
+        const currentUser = await userModel.findById(req.user._id);
 
-        // Check if the user is an admin
-        if (email === config.admin_email && roles.includes("admin")) {
-            const user = await userModel.findOne({ email });
-
-            if (user) {
-                // Add "admin" role if not already present
-                if (!user.roles.includes("admin")) {
-                    user.roles.push("admin");
-                    await user.save();
-                }
-
-                // Send a success response
-                return sendResponse(res, 200, true, "Role has been updated");
-            } else {
-                return next(createHttpError(404, "User not found"));
-            }
-        } else {
-            return next(createHttpError(403, "Forbidden: You do not have the required permissions"));
+        if (!currentUser) {
+            return next(createHttpError(404, "Current user not found"));
         }
-    } catch (error) {
-        next(error); // Pass any errors to the error handler
+
+        const isAdmin = currentUser.roles.includes("admin");
+
+        if (!isAdminEmail && !isAdmin) {
+            return next(createHttpError(403, "Only an admin can update roles"));
+        }
+
+        const user = await userModel.findById(userId);
+
+        if (!user) {
+            return next(createHttpError(404, "User not found"));
+        }
+
+        if (user.roles.includes(role)) {
+            return next(createHttpError(400, "User already has this role"));
+        }
+
+        user.roles.push(role);
+        await user.save();
+
+        sendResponse(res, 200, true, "Role updated successfully", user);
+    } catch (error: any) {
+        next(createHttpError(500, error.message));
     }
 });
 
+
 export default rolePermission;
+
+
+export const removeRolePermission = expressAsyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { userId } = req.params;
+        const { role } = req.body;
+
+        if (!role) {
+            return next(createHttpError(400, "Role is required"));
+        }
+
+        const isAdminEmail = req.user.email === config.admin_email;
+        const currentUser = await userModel.findById(req.user._id);
+
+        if (!currentUser) {
+            return next(createHttpError(404, "Current user not found"));
+        }
+
+        const isAdmin = currentUser.roles.includes("admin");
+
+        if (!isAdminEmail && !isAdmin) {
+            return next(createHttpError(403, "Only admin can remove roles"));
+        }
+
+        const user = await userModel.findById(userId);
+
+        if (!user) {
+            return next(createHttpError(404, "User not found"));
+        }
+
+        if (!user.roles.includes(role)) {
+            return next(createHttpError(400, "Role not found for the user"));
+        }
+
+        user.roles = user.roles.filter((r) => r !== role);
+        await user.save();
+
+        res.status(200).json({ message: "Role removed successfully", user});
+    } catch (error: any) {
+        next(createHttpError(500, error.message));
+    }
+});
+
+
+
+
+
+
 
 
 // <============Social ===============>
@@ -76,7 +139,10 @@ export const socialAuth = expressAsyncHandler(async (req: Request, res: Response
 
         }
 
-    } catch (error) {
-        next(error)
+        return sendResponse(res, 200, true, " By social auth", user)
+
+    } catch (error: any) {
+        return next(createHttpError(500, error.message))
     }
 })
+
