@@ -7,6 +7,10 @@ import createHttpError from "http-errors";
 import errorHandler from "./utils/errorHandler";
 import userRouter from "../src/routes/user.route";
 import courseRoutes from "./routes/course.route";
+import orderRoute from "./routes/order.route";
+import notificationRoute from "./routes/notification.route";
+import analyticsRoute from "./routes/analytic.route";
+import layoutRoute from "./routes/layout.route";
 
 const app = express();
 const apiVersion = 1;
@@ -27,6 +31,10 @@ app.use(cookieParser());
 // Router middleware
 app.use(`/api/v${apiVersion}`, userRouter);
 app.use(`/api/v${apiVersion}`, courseRoutes);
+app.use(`/api/v${apiVersion}`, orderRoute);
+app.use(`/api/v${apiVersion}`, notificationRoute);
+app.use(`/api/v${apiVersion}`, analyticsRoute);
+app.use(`/api/v${apiVersion}`, layoutRoute);
 
 // 404 Route
 app.all("*", (req: Request, _, next: NextFunction) => {
