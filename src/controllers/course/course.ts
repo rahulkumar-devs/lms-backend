@@ -5,6 +5,8 @@ import courseModel, { ICourse } from "../../models/course/course.model";
 import uploadImageToCloudinary from "../../utils/cloudinaryImageUpload";
 import createHttpError from "http-errors";
 import sendResponse from "../../utils/sendResponse";
+import { isValidObjectId } from "mongoose";
+import redis from "../../configurations/redis-connections";
 
 
 //  req.files['avatar'][0] -> File
@@ -49,10 +51,34 @@ export const uploadCourse = expressAsyncHandler(
 
             sendResponse(res, 200, true, "Course create successfully")
 
-        } catch (error) {
-            next(error)
+        } catch (error: any) {
+            return next(createHttpError(500, error.message))
         }
     }
 )
 
+// <==Only admin can delete===>
+export const deleteCourse = expressAsyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+        try {
 
+            const { courseId } = req.params;
+
+            if (! courseId || !isValidObjectId(courseId))
+                return next(createHttpError(400, "Not a valid user Id"))
+
+
+            const course = await courseModel.findByIdAndDelete(courseId);
+
+            if (!course)
+                return next(createHttpError(400, "course not deleted"))
+
+            await redis.del(courseId)
+
+            return sendResponse(res, 200, true, "Course deleted successfully")
+
+        } catch (error: any) {
+            return next(createHttpError(500, error.message))
+        }
+
+    })
