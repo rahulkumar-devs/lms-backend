@@ -26,7 +26,7 @@ const registrationsUser = expressAsyncHandler(async (req: Request, res: Response
 
         const user: IRegisterUser = { name, email, password }
 
-        const { activationCode, token } = createActivationToken(user);
+        const { activationCode, activationToken } = createActivationToken(user);
 
         // send to mail
 
@@ -55,7 +55,7 @@ const registrationsUser = expressAsyncHandler(async (req: Request, res: Response
 
         });
 
-      return  sendResponse(res, 200, true, ` Code has been sent please Verify your account ${email}- ${activationCode} `, token)
+      return  sendResponse(res, 200, true, ` Code has been sent please Verify your account ${email}- ${activationCode} `,null,{activationToken})
 
     } catch (error: any) {
         next(createHttpError(500, error.message))
@@ -67,10 +67,10 @@ const registrationsUser = expressAsyncHandler(async (req: Request, res: Response
 export const createActivationToken = (user: IRegisterUser): IActivationToken => {
 
     const activationCode = generateRandomNumber(6).toString();
-    const token = jwt.sign({ user, activationCode }, config.activate_token_key, { expiresIn: "5m" });
+    const activationToken = jwt.sign({ user, activationCode }, config.activate_token_key, { expiresIn: "5m" });
 
     return {
-        activationCode, token
+        activationCode, activationToken
     }
 
 }

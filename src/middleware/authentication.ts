@@ -14,6 +14,8 @@ export const isAuthenticated = expressAsyncHandler(
 
             const token = accessToken || tokenFromHeader;
 
+            // console.log(token)
+
             if (!token) {
                 console.error("Token not found");
                 return next(createHttpError(401, "Token not found"));

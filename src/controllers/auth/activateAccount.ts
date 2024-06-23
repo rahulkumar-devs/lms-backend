@@ -17,6 +17,8 @@ const activateAccount = expressAsyncHandler(
 
             const { user, activationCode } = jwt.verify(activationToken, config.activate_token_key) as jwt.JwtPayload;
 
+           
+
             if (activateCode !== activationCode) {
                 next(createHttpError(400, "invalid activation code"))
             }
@@ -26,7 +28,7 @@ const activateAccount = expressAsyncHandler(
             let roles: ("user" | "admin" | "member")[] = [];
             if (email === config.admin_email) {
                 roles.push("admin");
-            }else{
+            } else {
                 roles.push("user");
             }
 
@@ -35,10 +37,9 @@ const activateAccount = expressAsyncHandler(
             if (!createUser) return next(createHttpError(400, " user not register"))
 
 
-            sendResponse(res, 200, true, "successFully user registerd", createUser)
+            return sendResponse(res, 200, true, "successFully user registerd", createUser)
         } catch (error: any) {
-
-            next(error.message)
+          return  next(error.message)
         }
     }
 )

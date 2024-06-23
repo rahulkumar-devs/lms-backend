@@ -6,10 +6,7 @@ export interface IUserSchema extends mongoose.Document {
     name: string;
     email: string;
     password: string;
-    avatar: {
-        public_id: string;
-        url: string;
-    };
+    avatar: any;
     roles: ("admin" | "member" | "user")[];
     isVarified: boolean;
     courses: Array<{ courseId: string }>;
@@ -31,6 +28,6 @@ export type IRegisterUser = {
 }
 
 export  type IActivationToken = {
-    token:string;
+    activationToken:string;
 activationCode:string;
 } 

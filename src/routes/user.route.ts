@@ -6,7 +6,7 @@ import { loginUser, logoutUser } from "../controllers/auth/loginUser";
 import { isAuthenticated } from "../middleware/authentication";
 import authorizedRole from "../middleware/authorizedRole";
 import { updateAccessToken } from "../controllers/auth/updateAccessToken";
-import { changeEmail, deleteUser, emailVerification, getAllUsers, getUserById, updateUserInfo } from "../services/user.service";
+import { changeEmail, deleteUser, emailVerification, getAllUsers, me, updateUserInfo } from "../services/user.service";
 import rolePermission, { removeRolePermission, socialAuth } from "../controllers/auth/rolePermission";
 import { forgotPassword, verifyForgotPassword } from "../controllers/auth/forgotPassword";
 import { upload } from "../middleware/multerUploadFiles";
@@ -32,9 +32,9 @@ userRouter.route("/social-auth").post(socialAuth);
 
 
 // authenticated routes
-userRouter.route("/logout").get(isAuthenticated, authorizedRole("admin"), logoutUser);
-userRouter.route("/user").get(isAuthenticated, authorizedRole("admin", "user"), getUserById);
-userRouter.route("/update-userinfo").put(isAuthenticated, authorizedRole("admin", "user"), upload.single("avatar"), updateUserInfo);
+userRouter.route("/me").get(isAuthenticated, me);
+userRouter.route("/logout").post(isAuthenticated,  logoutUser);
+userRouter.route("/update-userinfo").put(isAuthenticated, authorizedRole("admin", "user","member") ,upload.single("avatar"),updateUserInfo);
 userRouter.route("/change-email").post(isAuthenticated, authorizedRole("admin", "user"), changeEmail);
 
 

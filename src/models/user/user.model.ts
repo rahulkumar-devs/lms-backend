@@ -34,8 +34,7 @@ const userSchema: Schema<IUserSchema> = new Schema({
     },
 
     avatar: {
-        public_id: String,
-        url: String
+        type: Schema.Types.Mixed
     },
     roles: {
         type: [String],
@@ -49,7 +48,6 @@ const userSchema: Schema<IUserSchema> = new Schema({
             courseId: String
         }
     ]
-
 
 },
     {
@@ -78,14 +76,14 @@ userSchema.methods.comparePassword = async function (enteredPassword: string): P
 
 
 userSchema.methods.signAccessToken = async function (): Promise<string> {
-console.log(config.access_token_expiry*60_000);
-    return jwt.sign({ _id: this._id }, config.access_token_key, { expiresIn: "5m"})
+    console.log(config.access_token_expiry * 60_000);
+    return jwt.sign({ _id: this._id }, config.access_token_key, { expiresIn: "5m" })
 
 
 }
 userSchema.methods.signRefreshToken = async function () {
 
-    return jwt.sign({ _id: this._id }, config.refresh_token_key, { expiresIn:"7d"})
+    return jwt.sign({ _id: this._id }, config.refresh_token_key, { expiresIn: "7d" })
 }
 
 const userModel: Model<IUserSchema> = mongoose.model("User", userSchema);

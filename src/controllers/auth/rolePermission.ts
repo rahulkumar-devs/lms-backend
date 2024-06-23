@@ -121,7 +121,10 @@ export const socialAuth = expressAsyncHandler(async (req: Request, res: Response
 
         const { name, email, avatar } = req.body as ISocialAuthBody;
 
+        // console.log( name, email, avatar )
+
         const user = await userModel.findOne({ email });
+      
 
         if (!user) {
             let newUser: any;
@@ -139,7 +142,7 @@ export const socialAuth = expressAsyncHandler(async (req: Request, res: Response
 
         }
 
-        return sendResponse(res, 200, true, " By social auth", user)
+        // return sendResponse(res, 200, true, " By social auth", null,{user})
 
     } catch (error: any) {
         return next(createHttpError(500, error.message))

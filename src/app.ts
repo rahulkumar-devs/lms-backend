@@ -16,7 +16,14 @@ const app = express();
 const apiVersion = 1;
 
 // Enable CORS middleware
-app.use(cors());
+app.use(
+    cors({
+       origin: "http://localhost:3000",
+       methods: ["GET", "POST", "PUT", "DELETE"],
+       allowedHeaders: ["Content-Type", "Authorization"],
+       credentials: true
+    })
+ );
 
 // Logging middleware
 app.use(morgan("dev"));
