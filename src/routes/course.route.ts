@@ -1,11 +1,12 @@
 import express from "express"
-import { deleteCourse, uploadCourse } from "../controllers/course/course";
+import { uploadCourse } from "../controllers/course/course";
 import { isAuthenticated } from './../middleware/authentication';
 import authorizedRole from './../middleware/authorizedRole';
 import { upload } from "../middleware/multerUploadFiles";
 import { updateCourse } from "../controllers/course/updateCourse";
 import { getAllCourses, getAllCoursesForAdmin, getCourseForElibigleUser, getSingleCourse } from "../controllers/course/getCourses";
 import { addAnswer, addQuestions, addReplyOnReview, addReview } from "../services/course.service";
+import { updateAccessToken } from "../controllers/auth/updateAccessToken";
 const courseRoutes = express.Router();
 
 
@@ -22,17 +23,31 @@ courseRoutes.route("/get-all-courses").get(getAllCourses)
 
 courseRoutes.route("/all-courses").put(isAuthenticated, authorizedRole("admin"), getAllCoursesForAdmin)
 
-courseRoutes.route("/upload-course").post(isAuthenticated, authorizedRole("admin"),
-    upload.fields([{ name: 'courseThumbnail', maxCount: 1 }, { name: "videoThumbnail", maxCount: 1 }])
-    ,
-    uploadCourse)
-courseRoutes.route("/update-course/:courseId").put(isAuthenticated, authorizedRole("admin"),
-    upload.fields([{ name: 'courseThumbnail', maxCount: 1 }, { name: "videoThumbnail", maxCount: 1 }])
-    ,
-    updateCourse);
+
+// Upload course
+courseRoutes.route('/upload-course').post(
+  updateAccessToken,
+  isAuthenticated,
+  authorizedRole("admin"),
+  upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'demoVideo', maxCount: 1 },
+    { name: 'courseVideo' }
+  ]),
+    uploadCourse
+  );
 
 
-courseRoutes.route("/delete-course/:courseId").delete(isAuthenticated, authorizedRole("admin"), deleteCourse)
+
+
+
+// courseRoutes.route("/update-course/:courseId").put(isAuthenticated, authorizedRole("admin"),
+//     upload.fields([{ name: 'courseThumbnail', maxCount: 1 }, { name: "videoThumbnail", maxCount: 1 }])
+//     ,
+//     updateCourse);
+
+
+// courseRoutes.route("/delete-course/:courseId").delete(isAuthenticated, authorizedRole("admin"), deleteCourse)
 
 
 //<=====****************====>

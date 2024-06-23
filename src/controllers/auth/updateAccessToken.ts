@@ -42,13 +42,13 @@ export const updateAccessToken = expressAsyncHandler(async (req: Request, res: R
         // Set cookies with new tokens
         res.cookie("accessToken", newAccessToken, accessTokenOptions)
             .cookie("refreshToken", newRefreshToken, refreshTokenOptions)
-            .status(200).json({
-                success: true,
-                message: "Tokens updated successfully",
-                accessToken: newAccessToken,
-                refreshToken:newRefreshToken
-            });
-
+            // .status(200).json({
+            //     success: true,
+            //     message: "Tokens updated successfully",
+            //     accessToken: newAccessToken,
+            //     refreshToken:newRefreshToken
+            // });
+next()
 
 
     } catch (error) {

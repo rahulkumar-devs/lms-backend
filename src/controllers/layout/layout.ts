@@ -1,7 +1,7 @@
 import expressAsyncHandler from "express-async-handler";
 import { Request, Response, NextFunction } from "express";
 import createHttpError from "http-errors";
-import uploadImageToCloudinary, { deleteCloudinaryFile } from "../../utils/cloudinaryImageUpload";
+import uploadImageToCloudinary, { deleteCloudinaryFile } from "../../utils/uploadToCloudinary";
 import layoutModel from "../../models/layout/layout.modal";
 import sendResponse from "../../utils/sendResponse";
 import fs, { existsSync } from 'fs';

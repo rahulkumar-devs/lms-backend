@@ -8,7 +8,7 @@ import authorizedRole from "../middleware/authorizedRole";
 import { updateAccessToken } from "../controllers/auth/updateAccessToken";
 import { changeEmail, deleteUser, emailVerification, getAllUsers, me, updateUserInfo } from "../services/user.service";
 import rolePermission, { removeRolePermission, socialAuth } from "../controllers/auth/rolePermission";
-import { forgotPassword, verifyForgotPassword } from "../controllers/auth/forgotPassword";
+import { forgotPassword, updatePassword, verifyForgotPassword } from "../controllers/auth/forgotPassword";
 import { upload } from "../middleware/multerUploadFiles";
 
 const userRouter = express.Router();
@@ -32,14 +32,15 @@ userRouter.route("/social-auth").post(socialAuth);
 
 
 // authenticated routes
-userRouter.route("/me").get(isAuthenticated, me);
+userRouter.route("/me").get(updateAccessToken,isAuthenticated, me);
 userRouter.route("/logout").post(isAuthenticated,  logoutUser);
 userRouter.route("/update-userinfo").put(isAuthenticated, authorizedRole("admin", "user","member") ,upload.single("avatar"),updateUserInfo);
-userRouter.route("/change-email").post(isAuthenticated, authorizedRole("admin", "user"), changeEmail);
-
+userRouter.route("/change-email").post(isAuthenticated, authorizedRole("admin","member", "user"), changeEmail);
+userRouter.route("/email-verification").put(isAuthenticated, authorizedRole("admin", "user","member"), emailVerification);
+userRouter.route("/update-password").put(isAuthenticated, authorizedRole("admin", "user","member"), updatePassword);
 
 // <=====Only Admin Accessable=====>
-userRouter.route("/email-verification").put(isAuthenticated, authorizedRole("admin", "user"), emailVerification);
+
 userRouter.route("/delete-user/:userId").delete(isAuthenticated, authorizedRole("admin"), deleteUser);
 userRouter.route("/role-permission/:userId").put(isAuthenticated, authorizedRole("admin"), rolePermission);
 userRouter.route("/remove-role-permission/:userId").put(isAuthenticated, authorizedRole("admin"), removeRolePermission);

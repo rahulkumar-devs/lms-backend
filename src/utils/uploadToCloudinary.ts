@@ -10,7 +10,7 @@ export interface IFileDetails {
   height?: number;
 }
 
-const uploadImageToCloudinary = async ({
+const uploadToCloudinary = async ({
   filePath,
   folder,
   width = 300,
@@ -19,7 +19,8 @@ const uploadImageToCloudinary = async ({
   try {
     const result = await cloudinary.uploader.upload(filePath, {
       folder: folder,
-      quality_analysis: true,
+      // quality_analysis: true,
+      resource_type:"auto",
       width: width,
       height: height,
     });
@@ -44,7 +45,7 @@ const uploadImageToCloudinary = async ({
   }
 };
 
-export default uploadImageToCloudinary;
+export default uploadToCloudinary;
 
 
 // check file Already exist in cloudinary

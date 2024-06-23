@@ -12,6 +12,7 @@ import sendResponse from "../../utils/sendResponse";
 import redis from "../../configurations/redis-connections";
 
 
+
 // <============= forgotPassword , ==============>
 // <=============================================>
 
@@ -70,12 +71,12 @@ export const verifyForgotPassword = expressAsyncHandler(async (req: Request, res
 
         // Find user by email
         const user = await userModel.findOne({ email });
-        
+
 
         if (!user) {
             return next(createHttpError(404, "User not found"));
         }
-        
+
         // update redis
         await redis.set(user?._id as string, JSON.stringify(user))
 
@@ -93,6 +94,41 @@ export const verifyForgotPassword = expressAsyncHandler(async (req: Request, res
         res.status(200).json({ success: true, message: "Password reset code verified successfully" });
     } catch (error: any) {
         // Handle errors
+        next(createHttpError(500, error.message));
+    }
+});
+
+
+export const updatePassword = expressAsyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const userId = req.user?._id;
+        const { oldPassword, newPassword } = req.body;
+
+
+
+        // Ensure that the password field is selected
+        const user = await userModel.findOne({_id:userId}).select("+password");
+      
+
+        if(! user?.password)
+            return next(createHttpError(404, "You have authenticated by social auth"));
+
+
+        if (!user) {
+            return next(createHttpError(404, "User not found"));
+        }
+
+        const isPasswordMatched = await user.comparePassword(oldPassword as string);
+        if (!isPasswordMatched) {
+            return next(createHttpError(400, "Wrong Password"));
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        sendResponse(res, 200, true, "Password changed successfully");
+    } catch (error: any) {
+        console.error(error);
         next(createHttpError(500, error.message));
     }
 });

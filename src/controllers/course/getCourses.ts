@@ -2,7 +2,7 @@
 import { Request, Response, NextFunction } from "express"
 import expressAsyncHandler from "express-async-handler"
 import courseModel, { ICourse } from "../../models/course/course.model";
-import uploadImageToCloudinary from "../../utils/cloudinaryImageUpload";
+import uploadImageToCloudinary from "../../utils/uploadToCloudinary";
 import createHttpError from "http-errors";
 import sendResponse from "../../utils/sendResponse";
 import { isValidObjectId } from "mongoose";

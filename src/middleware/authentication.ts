@@ -13,6 +13,7 @@ export const isAuthenticated = expressAsyncHandler(
             const tokenFromHeader = req.header("authorization")?.replace("Bearer", "").trim();
 
             const token = accessToken || tokenFromHeader;
+           
 
             // console.log(token)
 
@@ -56,7 +57,7 @@ export const isAuthenticated = expressAsyncHandler(
             req.user = user;
             next();
         } catch (error) {
-           
+           console.error(error)
             next(createHttpError(500, "Internal Server Error"));
         }
     }
